@@ -13,12 +13,14 @@ this_include_HEADERS = \
     observablevalue.hpp \
     steppingiterator.hpp \
     tracing.hpp \
-    vectors.hpp
+    vectors.hpp \
+    flowanalysis.hpp
 
 cpp_files = \
     dataformatters.cpp \
     dataparsers.cpp \
-    tracing.cpp
+    tracing.cpp \
+    flowanalysis.cpp
 
 if UNITY_BUILD
 
