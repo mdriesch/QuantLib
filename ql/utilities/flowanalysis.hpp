@@ -22,6 +22,7 @@
 #ifndef ql_analysis_hpp
 #define ql_analysis_hpp
 
+#include <boost/parameter/keyword.hpp>
 #include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <ql/cashflow.hpp>
@@ -32,9 +33,9 @@
 namespace QuantLib {
 // class Date;
 
-std::vector<std::vector<std::string> >
-flowAnalysis(
-    const Leg& leg, const Date& d = Null<Date>(),
+std::vector<std::vector<std::string> > flowAnalysis(
+    const Leg& leg, const Date& d = Null<Date>(), const int& precision = 5,
+    const int& width = 0,
     const std::ios_base::fmtflags& fmt = std::ios_base::fmtflags(),
     const std::string& dateFormat = "%Y-%m-%d");
 }

@@ -38,14 +38,13 @@ class AnalysisGenerator : public QuantLib::AcyclicVisitor,
    private:
     stringVector flows_;
     static const QuantLib::Size numberOfColumns_ = 20;
-    std::stringstream stream_;
+    std::stringstream& stream_;
     std::string dateFormat_;
     std::string str(double d);
     std::string str(QuantLib::Date d);
 
    public:
-    AnalysisGenerator(const std::ios_base::fmtflags& fmt,
-                      const std::string& dateFormat);
+    AnalysisGenerator(std::stringstream& str, const std::string& dateFormat);
     void reset();
     void visit(QuantLib::CashFlow& c);
     void visit(QuantLib::Coupon& c);
@@ -76,10 +75,9 @@ class AnalysisGenerator : public QuantLib::AcyclicVisitor,
 #define CALLDIGITALRATE 18
 #define PUTDIGITALRATE 19
 
-AnalysisGenerator::AnalysisGenerator(const std::ios_base::fmtflags& fmt,
+AnalysisGenerator::AnalysisGenerator(std::stringstream& str,
                                      const std::string& dateFormat)
-    : dateFormat_(dateFormat) {
-    stream_.setf(fmt);
+    : dateFormat_(dateFormat), stream_(str) {
     reset();
 }
 
@@ -114,13 +112,13 @@ void AnalysisGenerator::reset() {
 }
 
 inline std::string AnalysisGenerator::str(double d) {
-    stream_.str("");
+    stream_.str(std::string());
     stream_ << d;
     return stream_.str();
 }
 
 inline std::string AnalysisGenerator::str(QuantLib::Date d) {
-    stream_.str("");
+    stream_.str(std::string());
     stream_ << QuantLib::io::formatted_date(d, dateFormat_);
     return stream_.str();
 }
@@ -227,11 +225,18 @@ void AnalysisGenerator::visit(QuantLib::DigitalCoupon& c) {
 }
 
 const stringVector& AnalysisGenerator::analysis() const { return flows_; }
+}
 
+namespace QuantLib {
 stringVector flowAnalysis(const QuantLib::Leg& leg, const QuantLib::Date& d,
+                          const int& precision, const int& width,
                           const std::ios_base::fmtflags& fmt,
                           const std::string& dateFormat) {
-    AnalysisGenerator generator(fmt, dateFormat);
+    std::stringstream ss;
+    ss.flags(fmt);
+    ss.precision(precision);
+    if (width > 0) ss.width(width);
+    AnalysisGenerator generator(ss, dateFormat);
     for (QuantLib::Size i = 0; i < leg.size(); ++i) {
         if (d == QuantLib::Null<QuantLib::Date>() || leg[i]->date() > d)
             leg[i]->accept(generator);
