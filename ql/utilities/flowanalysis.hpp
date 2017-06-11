@@ -29,15 +29,26 @@
 #include <ql/utilities/null.hpp>
 #include <string>
 #include <vector>
+#include <boost/any.hpp>
+
+
+typedef std::vector<std::vector<std::string> > stringVector;
+typedef std::vector<std::vector<boost::any> > anyVector;
 
 namespace QuantLib {
-// class Date;
+class Date;
 
-std::vector<std::vector<std::string> > flowAnalysis(
+stringVector flowAnalysis(
     const Leg& leg, const Date& d = Null<Date>(), const int& precision = 5,
     const int& width = 0,
     const std::ios_base::fmtflags& fmt = std::ios_base::fmtflags(),
     const std::string& dateFormat = "%Y-%m-%d");
+
+anyVector flowAnalysis(
+    const Leg& leg, const Date& d = Null<Date>());
+
+std::string flowAnalysisPrint(stringVector s);
 }
+
 
 #endif

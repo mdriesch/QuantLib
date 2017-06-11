@@ -35,6 +35,7 @@
 #include <ql/cashflows/cashflows.hpp>
 #include <ql/cashflows/couponpricer.hpp>
 #include <ql/currencies/europe.hpp>
+#include <ql/utilities/flowanalysis.hpp>
 
 using namespace QuantLib;
 using namespace boost::unit_test_framework;
@@ -116,6 +117,10 @@ void SwapTest::testFairRate() {
             boost::shared_ptr<VanillaSwap> swap =
                 vars.makeSwap(lengths[i],0.0,spreads[j]);
             swap = vars.makeSwap(lengths[i],swap->fairRate(),spreads[j]);
+            Leg swapLeg = swap->floatingLeg();
+            std::string flows = flowAnalysisPrint(
+                flowAnalysis(swapLeg, Date(), 5, 0, std::cout.flags()));
+            std::cout<<flows;
             if (std::fabs(swap->NPV()) > 1.0e-10) {
                 BOOST_ERROR("recalculating with implied rate:\n"
                             << std::setprecision(2)

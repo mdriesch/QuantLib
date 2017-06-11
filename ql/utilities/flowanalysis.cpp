@@ -27,8 +27,6 @@ using std::vector;
 
 namespace {
 
-typedef vector<vector<std::string> > stringVector;
-
 class AnalysisGenerator : public QuantLib::AcyclicVisitor,
                           public Visitor<QuantLib::CashFlow>,
                           public Visitor<QuantLib::Coupon>,
@@ -37,6 +35,7 @@ class AnalysisGenerator : public QuantLib::AcyclicVisitor,
                           public Visitor<QuantLib::DigitalCoupon> {
    private:
     stringVector flows_;
+    anyVector fullFlows_;
     static const QuantLib::Size numberOfColumns_ = 20;
     std::stringstream& stream_;
     std::string dateFormat_;
@@ -52,6 +51,7 @@ class AnalysisGenerator : public QuantLib::AcyclicVisitor,
     void visit(QuantLib::CappedFlooredCoupon& c);
     void visit(QuantLib::DigitalCoupon& c);
     const stringVector& analysis() const;
+    anyVector analysisAny() const;
 };
 
 #define PAYMENT_DATE 0
@@ -83,6 +83,7 @@ AnalysisGenerator::AnalysisGenerator(std::stringstream& str,
 
 void AnalysisGenerator::reset() {
     flows_.clear();
+    fullFlows_.clear();
 
     vector<std::string> headings(numberOfColumns_);
     headings[PAYMENT_DATE] = std::string("Payment Date");
@@ -109,6 +110,9 @@ void AnalysisGenerator::reset() {
     headings[CALLDIGITALRATE] = std::string("Call Digital Payoff");
 
     flows_.push_back(headings);
+    std::vector<boost::any> tmp;
+    for (auto i = tmp.begin(); i != tmp.end(); ++i) tmp.push_back(*i);
+    fullFlows_.push_back(tmp);
 }
 
 inline std::string AnalysisGenerator::str(double d) {
@@ -125,12 +129,16 @@ inline std::string AnalysisGenerator::str(QuantLib::Date d) {
 
 void AnalysisGenerator::visit(QuantLib::CashFlow& c) {
     vector<std::string> cf(numberOfColumns_, std::string("#N/A"));
+    vector<boost::any> cfAny(numberOfColumns_, std::string("#N/A"));
     cf[PAYMENT_DATE] = str(c.date());
+    cfAny[PAYMENT_DATE] = c.date();
     try {
         cf[AMOUNT] = str(c.amount());
+        cfAny[AMOUNT] = c.amount(); 
     } catch (...) {
     }
     flows_.push_back(cf);
+    fullFlows_.push_back(cfAny);
 }
 
 void AnalysisGenerator::visit(QuantLib::Coupon& c) {
@@ -228,6 +236,7 @@ const stringVector& AnalysisGenerator::analysis() const { return flows_; }
 }
 
 namespace QuantLib {
+
 stringVector flowAnalysis(const QuantLib::Leg& leg, const QuantLib::Date& d,
                           const int& precision, const int& width,
                           const std::ios_base::fmtflags& fmt,
@@ -242,5 +251,21 @@ stringVector flowAnalysis(const QuantLib::Leg& leg, const QuantLib::Date& d,
             leg[i]->accept(generator);
     }
     return generator.analysis();
+}
+
+std::string flowAnalysisPrint(stringVector s) {
+    std::stringstream ss;
+    Size rows = s.size();
+    QL_ASSERT(rows > 0, "String matrix is empty.");
+    Size columns = s[0].size();
+
+    for (Size row = 0; row < rows; ++row) {
+        for (Size col = 0; col < columns; ++col) {
+            ss << s[row][col] << ",";
+        }
+        ss.seekp(-1, std::ios_base::end);  // remove last comma
+        ss << std::endl;
+    }
+    return ss.str();
 }
 }
